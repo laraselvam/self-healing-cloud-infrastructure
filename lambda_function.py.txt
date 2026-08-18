@@ -1,9 +1,25 @@
 import boto3
-def lambda_handler(event,context):
-    ec2=boto3.client('ec2',region_name='ap-southeast-2')
-    instance_id='i-04421684b1adda45c'
-    ec2.reboot_instances(instanceIds=[instance_id])
-    return{
-        'statuscode':200,
-        'body':'instance rebooted successfully'
+import json
+
+def lambda_handler(event, context):
+    # SNS message la irundhu alarm details edukurom
+    message = json.loads(event['Records'][0]['Sns']['Message'])
+    
+    # Alarm-oda dimensions la irundhu instance ID edukurom
+    dimensions = message['Trigger']['Dimensions']
+    instance_id = None
+    for d in dimensions:
+        if d['name'] == 'InstanceId':
+            instance_id = d['value']
+            break
+    
+    if not instance_id:
+        return {'statusCode': 400, 'body': 'No instance ID found in alarm'}
+    
+    ec2 = boto3.client('ec2', region_name='ap-southeast-2')
+    ec2.reboot_instances(InstanceIds=[instance_id])
+    
+    return {
+        'statusCode': 200,
+        'body': f'Instance {instance_id} rebooted successfully'
     }
