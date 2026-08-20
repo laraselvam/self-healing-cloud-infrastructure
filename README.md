@@ -44,3 +44,20 @@ The Lambda function does not hardcode which instance to reboot. Instead, it pars
 ## Status
 
 Core pipeline is built and tested end-to-end (Lambda deploy verified via test invocation).
+## Containerization & Orchestration
+
+Beyond the Lambda-based auto-healing pipeline, this project also demonstrates two levels of container deployment:
+
+### Docker (single instance)
+- Built a static web app image (`mywebapp`) and pushed it to Docker Hub: `docker.io/laraidhalya/mywebapp`
+- Pulled and ran the image on the EC2 instance itself, exposing it on port 80
+- Verified public access over HTTP via the EC2 instance's public IP
+
+### Kubernetes (self-healing via replicas)
+- Deployed the same image to a local Kubernetes cluster (`kind`, via Docker Desktop) with **3 replicas**
+- Accessed the app locally via `kubectl port-forward`
+- Verified Kubernetes' own self-healing behavior: deleting a pod causes the ReplicaSet controller to automatically create a replacement, keeping the desired replica count at 3
+
+This shows self-healing at two different layers:
+- **Infrastructure level** (EC2/Lambda): detects and recovers from a whole-instance failure
+- **Application level** (Kubernetes): detects and recovers from individual container/pod failures
